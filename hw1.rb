@@ -1,13 +1,9 @@
 def convert_to_bgn(price, currency)
   case currency
-    when :bgn
-      price.round(2)
-    when :usd
-      (price * 1.7408).round(2)
-    when :eur
-      (price * 1.9557).round(2)
-    when :gbp
-      (price * 2.6415).round(2)
+    when :bgn then price.round(2)
+    when :usd then (price * 1.7408).round(2)
+    when :eur then (price * 1.9557).round(2)
+    when :gbp then (price * 2.6415).round(2)
   end
 end
 
