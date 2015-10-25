@@ -68,10 +68,16 @@ describe 'Third task' do
 
     describe '#aimless' do
       it 'can calculate for 0' do
-        expect(DrunkenMathematician.aimless(2)).to eq 0
+        expect(DrunkenMathematician.aimless(0)).to eq 0
+      end
+      it 'can calculate for 1' do
+        expect(DrunkenMathematician.aimless(1)).to eq 2
       end
       it 'can calculate for 2' do
         expect(DrunkenMathematician.aimless(2)).to eq '2/3'.to_r
+      end
+      it 'can calculate for 3' do
+        expect(DrunkenMathematician.aimless(3)).to eq '17/3'.to_r
       end
       it 'can calculate for 4' do
         expect(DrunkenMathematician.aimless(4)).to eq '29/21'.to_r
@@ -80,7 +86,7 @@ describe 'Third task' do
 
     describe '#worthless' do
       it 'can calculate for 0' do
-        expect(DrunkenMathematician.worthless(1)).to eq []
+        expect(DrunkenMathematician.worthless(0)).to eq []
       end
       it 'can calculate for 1' do
         expect(DrunkenMathematician.worthless(1)).to eq %w(1/1).map(&:to_r)
