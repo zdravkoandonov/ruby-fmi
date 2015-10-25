@@ -87,14 +87,28 @@ module DrunkenMathematician
   module_function
 
   def meaningless(n)
-
+    first_rational_numbers = RationalSequence.new(n)
+    two_groups = first_rational_numbers.
+      group_by { |number| number.numerator.prime? || number.denominator.prime? }
+    two_groups.map { |key, group| two_groups[key] = group.reduce(1, :*) }
+    two_groups.fetch(true, 1) / two_groups.fetch(false, 1)
   end
 
   def aimless(n)
-
+    first_n_prime_numbers = PrimeSequence.new(n)
+    rational_numbers = []
+    first_n_prime_numbers.each_slice(2) do |group|
+      rational_numbers << Rational(group.fetch(0, 0), group.fetch(1, 1))
+    end
+    rational_numbers.reduce(0, :+)
   end
 
   def worthless(n)
-
+    rational_numbers = RationalSequence.new(Float::INFINITY)
+    taken_numbers = []
+    rational_numbers.take_while do |number|
+      taken_numbers << number
+      taken_numbers.reduce(0, :+) <= n
+    end
   end
 end
