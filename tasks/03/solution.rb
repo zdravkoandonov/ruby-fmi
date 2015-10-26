@@ -14,23 +14,21 @@ end
 class RationalSequence
   include Enumerable
 
-  def initialize(n)
-    @n = n
+  def initialize(count)
+    @count = count
   end
 
   def each
-    row = 1
-    position = 1
-    count = 0
+    row, position = 1, 1
+    yielded_numbers_count = 0
     going_upward = false
-    while count < @n
-      numerator = position
-      denominator = row + 1 - position
+    while yielded_numbers_count < @count
+      numerator, denominator = position, row + 1 - position
       numerator, denominator = denominator, numerator if going_upward
       irreducible = Rational(numerator, denominator)
       if irreducible.numerator == numerator
         yield irreducible
-        count += 1
+        yielded_numbers_count += 1
       end
       position += 1
       if position > row
@@ -45,17 +43,17 @@ end
 class PrimeSequence
   include Enumerable
 
-  def initialize(n)
-    @n = n
+  def initialize(count)
+    @count = count
   end
 
   def each
-    i = 0
+    yielded_numbers_count = 0
     number = 2
-    while i < @n
+    while yielded_numbers_count < @count
       if number.prime?
         yield number
-        i += 1
+        yielded_numbers_count += 1
       end
       number += 1
     end
@@ -65,20 +63,20 @@ end
 class FibonacciSequence
   include Enumerable
 
-  def initialize(n, first: 1, second: 1)
-    @n = n
+  def initialize(count, first: 1, second: 1)
+    @count = count
     @first = first
     @second = second
   end
 
   def each
-    a = @first
-    b = @second
-    i = 0
-    while i < @n
-      yield a
-      a, b = b, a + b
-      i += 1
+    current = @first
+    following = @second
+    yielded_numbers_count = 0
+    while yielded_numbers_count < @count
+      yield current
+      current, following = following, current + following
+      yielded_numbers_count += 1
     end
   end
 end
@@ -87,8 +85,8 @@ module DrunkenMathematician
   module_function
 
   def meaningless(n)
-    first_rational_numbers = RationalSequence.new(n)
-    two_groups = first_rational_numbers.
+    first_n_rational_numbers = RationalSequence.new(n)
+    two_groups = first_n_rational_numbers.
       group_by { |number| number.numerator.prime? || number.denominator.prime? }
     two_groups.map { |key, group| two_groups[key] = group.reduce(1, :*) }
     two_groups.fetch(true, 1) / two_groups.fetch(false, 1)
@@ -105,10 +103,11 @@ module DrunkenMathematician
 
   def worthless(n)
     rational_numbers = RationalSequence.new(Float::INFINITY)
+    limit = FibonacciSequence.new(n).to_a.fetch(-1, 0)
     taken_numbers = []
     rational_numbers.take_while do |number|
       taken_numbers << number
-      taken_numbers.reduce(0, :+) <= n
+      taken_numbers.reduce(0, :+) <= limit
     end
   end
 end
