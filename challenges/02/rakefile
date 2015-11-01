@@ -1,0 +1,6 @@
+task default: %w[test]
+
+task :test do
+  ruby "solution.rb"
+  sh "rspec spec.rb --require ./solution.rb --colour --format documentation"
+end
