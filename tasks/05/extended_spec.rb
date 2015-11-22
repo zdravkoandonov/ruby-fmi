@@ -30,6 +30,14 @@ describe ObjectStore do
     expect(repo.commit("So cool!")).to be_success with_message: "So cool!\n\t2 objects changed", and_result: repo.head.result
   end
 
+  it "can fail commiting objects if no changes were made" do
+    repo = ObjectStore.init
+    repo.add("object1", "content1")
+    repo.add("object2", "content2")
+    repo.commit("So cool!")
+    expect(repo.commit("So cool!")).to be_failure with_message: "Nothing to commit, working directory clean."
+  end
+
   describe '#init' do
 
     let(:repo) { ObjectStore.init }
@@ -39,7 +47,7 @@ describe ObjectStore do
     end
 
     it 'returns self if initialized with a block' do
-      skip 'not required'
+      #skip 'not required'
       repo = ObjectStore.init do
         add("value", 21)
         commit("message")
@@ -103,6 +111,16 @@ EOS
       repo.add('slot', 'mlon')
       repo.commit('another test message')
       repo.remove('important')
+      expect(repo.checkout(prev_commit.hash)).to be_success with_message: "HEAD is now at #{prev_commit.hash}.", and_result: prev_commit
+
+      repo.add('important', 'stuff')
+      repo.commit('test message').result
+      repo.add('slot', 'mlon')
+      prev_commit = repo.commit('another test message').result
+      repo.remove('important')
+      repo.commit('another test message 2')
+      repo.add('slot1', 'mlon')
+      repo.commit('another test message 3')
       expect(repo.checkout(prev_commit.hash)).to be_success with_message: "HEAD is now at #{prev_commit.hash}.", and_result: prev_commit
     end
 
@@ -264,6 +282,16 @@ EOS
       it 'can list branches' do
         expect(branch.list).to be_success with_message: '* master'
       end
+
+      it 'can list many branches alphabetically' do
+        store = ObjectStore.init
+        store.branch.create("develop")
+        store.branch.create("avant")
+        store.branch.create("zavant")
+        store.branch.create("bavant")
+        store.branch.checkout("bavant")
+        expect(store.branch.list).to be_success with_message: "  avant\n* bavant\n  develop\n  master\n  zavant"
+      end
     end
 
     describe '#create' do
@@ -277,7 +305,7 @@ EOS
       end
     end
 
-    describe '#ceckout' do
+    describe '#checkout' do
 
       it 'can not checkout non existing branch' do
         expect(branch.checkout('develop')).to be_failure with_message: 'Branch develop does not exist.'
@@ -286,6 +314,27 @@ EOS
       it 'can checkout an existing branch' do
         branch.create('develop')
         expect(branch.checkout('develop')).to be_success with_message: 'Switched to branch develop.'
+
+        store = ObjectStore.init
+        store.branch.create('develop')
+        store.add("baba", "Ivanka")
+        store.commit("Added: baba")
+        store.branch.checkout('develop')
+        store.add("dyado", "Pesho")
+        store.commit("Added: dyado")
+        expect(store.head.result.objects.size).to eq 1
+        store.branch.checkout('master')
+        expect(store.head.result.objects.size).to eq 1
+        store.add("baba1", "Ivanka1")
+        store.commit("Added: baba1")
+        store.branch.checkout('develop')
+        store.add("dyado1", "Pesho1")
+        store.commit("Added: dyado1")
+        expect(store.head.result.objects.size).to eq 2
+        expect(store.head.result.objects).to eq ['Pesho', 'Pesho1']
+        store.branch.checkout('master')
+        expect(store.head.result.objects.size).to eq 2
+        expect(store.head.result.objects).to eq ['Ivanka', 'Ivanka1']
       end
     end
 
