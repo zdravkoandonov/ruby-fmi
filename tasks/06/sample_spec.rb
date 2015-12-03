@@ -26,9 +26,9 @@ describe 'TurtleGraphics' do
       html_canvas = TurtleGraphics::Canvas::HTML.new(3)
       canvas = TurtleGraphics::Turtle.new(2, 2).draw(html_canvas) { move }
       expect(canvas.gsub(/\s+/, '')).to include <<-HTML.gsub(/\s+/, '')
-td {
-  width: 3px;
-  height: 3px;
+      td {
+        width: 3px;
+        height: 3px;
       HTML
     end
   end

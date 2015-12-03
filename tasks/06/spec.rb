@@ -46,7 +46,7 @@ describe 'TurtleGraphics' do
               move
             end
 
-            expect(canvas).to eq [[2, 0], [0, 0]]
+            expect(canvas).to eq [[1, 0], [1, 0]]
           end
         end
 
@@ -250,15 +250,70 @@ describe 'TurtleGraphics' do
     end
   end
 
-#  describe 'Canvas::HTML' do
-#    it 'sets the pixel size of the table' do
-#      html_canvas = TurtleGraphics::Canvas::HTML.new(3)
-#      canvas = TurtleGraphics::Turtle.new(2, 2).draw(html_canvas) { move }
-#      expect(canvas.gsub(/\s+/, '')).to include <<-HTML.gsub(/\s+/, '')
-#td {
-#  width: 3px;
-#  height: 3px;
-#      HTML
-#    end
-#  end
+ describe 'Canvas::HTML' do
+   it 'works for the test in the readme' do
+    html_canvas = TurtleGraphics::Canvas::HTML.new(5)
+    html = TurtleGraphics::Turtle.new(3, 3).draw(html_canvas) do
+      move
+      turn_right
+      move
+      turn_left
+      move
+    end
+    expect(html.gsub(/\s+/, '')).to eq <<-HTML.gsub(/\s+/, '')
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Turtle graphics</title>
+
+        <style>
+          table {
+            border-spacing: 0;
+          }
+
+          tr {
+            padding: 0;
+          }
+
+          td {
+            width: 5px;
+            height: 5px;
+
+            background-color: black;
+            padding: 0;
+          }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <td style="opacity: 1.00"></td>
+            <td style="opacity: 1.00"></td>
+            <td style="opacity: 0.00"></td>
+          </tr>
+          <tr>
+            <td style="opacity: 0.00"></td>
+            <td style="opacity: 1.00"></td>
+            <td style="opacity: 1.00"></td>
+          </tr>
+          <tr>
+            <td style="opacity: 0.00"></td>
+            <td style="opacity: 0.00"></td>
+            <td style="opacity: 0.00"></td>
+          </tr>
+        </table>
+      </body>
+      </html>
+      HTML
+    end
+    it 'sets the pixel size of the table' do
+      html_canvas = TurtleGraphics::Canvas::HTML.new(3)
+      canvas = TurtleGraphics::Turtle.new(2, 2).draw(html_canvas) { move }
+      expect(canvas.gsub(/\s+/, '')).to include <<-HTML.gsub(/\s+/, '')
+      td {
+        width: 3px;
+        height: 3px;
+      HTML
+    end
+  end
 end
