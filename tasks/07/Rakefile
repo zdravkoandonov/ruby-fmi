@@ -1,0 +1,7 @@
+task default: %w[test]
+
+task :test do
+  ruby "solution.rb"
+  sh "rspec sample_spec.rb --require ./solution.rb --colour --format documentation"
+  sh "skeptic --lines-per-method 6 --line-length 80 --max-nesting-depth 1 --methods-per-class 8 --no-semicolons --no-trailing-whitespace --check-syntax --no-global-variables --english-words-for-names='' --naming-conventions --max-method-arity 4 --spaces-around-operators solution.rb"
+end
