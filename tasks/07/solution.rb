@@ -20,18 +20,22 @@ module LazyMode
       }
     end
 
+    def add_days!(days)
+      @day += days
+
+      @month += (@day - 1) / 30
+      @day = (@day - 1) % 30 + 1
+
+      @year += (@month - 1) / 12
+      @month = (@month - 1) % 12 + 1
+
+      self
+    end
+
     def add_days(days)
-      new_date = dup
+      new_date = clone
 
-      new_date.day += days
-
-      new_date.month += (new_date.day - 1) / 30
-      new_date.day = (new_date.day - 1) % 30 + 1
-
-      new_date.year += (new_date.month - 1) / 12
-      new_date.month = (new_date.month - 1) % 12 + 1
-
-      new_date
+      new_date.add_days!(days)
     end
 
     def days
@@ -59,33 +63,74 @@ module LazyMode
       notes << new_note
     end
 
-    def daily_agenda(date)
-      @notes.select { |note| note.scheduled_for_today?(date) }
+    class Agenda < Struct.new(:notes)
+      def where(status: nil, tag: nil, text: nil)
+        selected_notes = notes.select! do |note|
+          (!tag || note.tags.include?(tag)) &&
+            (!text || note.header.match(text) || note.body.match(text)) &&
+              (!status || note.status == status)
+        end
+        Agenda.new(selected_notes)
+      end
     end
 
-    def weekly_agenda(date)
-      @notes.select { |note| note.scheduled_for_this_week?(date) }
+    def daily_agenda(date_today)
+      notes_for_today = @notes
+        .select { |note| note.scheduled_for_today?(date_today) }
+        .map { |note| note.with_date(date_today) }
+      Agenda.new(notes_for_today)
+    end
+
+    def weekly_agenda(date_today)
+      dates_this_week = Array.new(7, date_today).zip(0..6).map do |date, days|
+        date.add_days(days)
+      end
+      notes = dates_this_week.map { |date|
+        daily_agenda(date).notes }.reduce(:+)
+      Agenda.new(notes)
     end
   end
 
   class Note
-    attr_reader :header, :file_name, :tags
+    attr_reader :header, :file_name, :tags, :date
     attr_writer :file
-    attr_accessor :body, :status
 
-    def initialize(file_name, header, *tags)
+    def initialize(file_name, header, tags)
       @file_name = file_name
       @header = header
       @tags = tags
+      @status = :topostpone
+      @body = ""
+    end
+
+    def body(body_to_set = nil)
+      if body_to_set
+        @body = body_to_set
+      else
+        @body
+      end
+    end
+
+    def status(status_to_set = nil)
+      if status_to_set
+        @status = status_to_set
+      else
+        @status
+      end
+    end
+
+    def with_date(date_scheduled)
+      @date = date_scheduled
+      self
     end
 
     def note(header, *tags, &block)
-      file.note(header, *tags, &block)
+      @file.note(header, *tags, &block)
     end
 
     def scheduled(date_string_with_repetition)
       date_string, repetition_string = date_string_with_repetition.split
-      @date = Date(date_string)
+      @date = Date.new(date_string)
       if repetition_string
         repeat_codes = {'m' => 30, 'w' => 7, 'd' => 1}
         repeat_every = repetition_string[1..-2].to_i
@@ -94,16 +139,11 @@ module LazyMode
     end
 
     def scheduled_for_today?(date)
-      # TODO: improve here
       if @repeat_interval
         @date.days_difference(date) % @repeat_interval == 0
       else
-        @date == date
+        @date.days_difference(date) == 0
       end
-    end
-
-    def scheduled_for_this_week?(date)
-      Array.new(7, date).zip(0..6).map(&:add_days).any?(&:scheduled_for_today)
     end
   end
 end
