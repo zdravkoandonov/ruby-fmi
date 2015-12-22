@@ -139,6 +139,7 @@ module LazyMode
     end
 
     def scheduled_for_today?(date)
+      # TODO: fix for backward dates
       if @repeat_interval
         @date.days_difference(date) % @repeat_interval == 0
       else
