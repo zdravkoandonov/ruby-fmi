@@ -52,46 +52,69 @@ class Spreadsheet
 
   class Functions
     class << self
-      def add(*arguments)
-        p arguments
-        arguments.reduce(:+)
+      def add(arguments)
+        if arguments.size >= 2
+          arguments.reduce(:+)
+        else
+          message = "Wrong number of arguments for 'ADD':" +
+            " expected at least 2, got #{arguments.size}"
+          raise Error, message
+        end
       end
 
-      # MULTIPLY – приема два или повече аргумента и връща произведението им.
-      def multiply(*arguments)
-        arguments.reduce(:*)
+      def multiply(arguments)
+        if arguments.size >= 2
+          arguments.reduce(:*)
+        else
+          message = "Wrong number of arguments for 'MULTIPLY':" +
+            " expected at least 2, got #{arguments.size}"
+          raise Error, message
+        end
       end
 
-      # SUBTRACT – приема точно два аргумента и връща разликата на първия минус
-      # втория.
-      def subtract(first_argument, second_argument)
-        first_argument - second_argument
+      def subtract(arguments)
+        if arguments.size == 2
+          arguments[0] - arguments[1]
+        else
+          message = "Wrong number of arguments for 'SUBTRACT':" +
+            " expected 2, got #{arguments.size}"
+          raise Error, message
+        end
       end
 
-      # DIVIDE – приема точно два аргумента, разделя първия на втория и връща
-      # резултата.
-      def divide(first_argument, second_argument)
-        first_argument / second_argument
+      def divide(arguments)
+        if arguments.size == 2
+          arguments[0] / arguments[1]
+        else
+          message = "Wrong number of arguments for 'DIVIDE':" +
+            " expected 2, got #{arguments.size}"
+          raise Error, message
+        end
       end
 
-      # MOD – приема точно два аргумента и връща остатъка от делението на
-      # първия аргумент на втория (аналогично на "оператора" % в Ruby).
-      def mod(first_argument, second_argument)
-        first_argument % second_argument
+      def mod(arguments)
+        if arguments.size == 2
+          arguments[0] % arguments[1]
+        else
+          message = "Wrong number of arguments for 'MOD':" +
+            " expected 2, got #{arguments.size}"
+          raise Error, message
+        end
       end
     end
   end
 
   class Expression
     ARGUMENT = /((\d+(\.\d+)?)|([[:upper:]]+\d+))/
-    FUNCTION = /[[:upper:]]+\((#{ARGUMENT}\s*,\s*)+#{ARGUMENT}\)/
+    FUNCTION = /[[:upper:]]+\(#{ARGUMENT}(\s*,\s*#{ARGUMENT})*\)/
 
     attr_accessor :value
 
     def initialize(expression_string, spreadsheet)
       @expression_string = expression_string
       @spreadsheet = spreadsheet
-      @value = calculate_expression(expression_string)
+      result = calculate_expression(expression_string)
+      @value = format_number_to_string(result.to_f)
     end
 
     private
@@ -102,13 +125,13 @@ class Spreadsheet
       elsif /\A#{FUNCTION}\Z/ =~ expression
         calculate_valid_function_from_string(expression)
       else
-        raise "Trololo"
+        raise Error, "Invalid expression '#{expression}'"
       end
     end
 
     def calculate_argument(expression)
       if expression =~ /\A\d/
-        expression.to_f.to_s
+        expression.to_f
       else
         @spreadsheet[expression]
       end
@@ -121,22 +144,21 @@ class Spreadsheet
 
     def calculate_function(function_name, arguments_string)
       arguments = arguments_string.split(/\s*,\s*/)
-        .map { |argument| format_number(calculate_argument(argument).to_f) }
-      Functions.public_send(function_name.downcase.to_sym, *arguments).to_s
-    rescue Exception => e
-      # TODO: find out which exception is which
-      puts e.backtrace
+        .map { |argument| calculate_argument(argument).to_f }
+      Functions.public_send(function_name.downcase.to_sym, arguments)
+    rescue NoMethodError
+      raise Error, "Unknown function '#{function_name}'"
     end
 
     def whole_number?(float)
       float.to_i == float
     end
 
-    def format_number(float)
+    def format_number_to_string(float)
       if whole_number?(float)
-        float.to_i
+        float.to_i.to_s
       else
-        float.round(2)
+        sprintf("%.2f", float.round(2))
       end
     end
   end
